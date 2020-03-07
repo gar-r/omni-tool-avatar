@@ -1,0 +1,21 @@
+{{define "body"}}
+<div class="row valign-wrapper" style="height: 100vh;">
+  <div class="col s4 offset-s4">
+    <div class="card horizontal hoverable snow">
+      <div class="card-image">
+        <img src="assets/octocat-red.png" />
+      </div>
+      <div class="card-stacked">
+        <div class="card-content valign-wrapper" style="height: 200px;">
+          <span class="card-title"><b>{{.Avatar.Name}}</b>
+            <span class="badge" data-badge-caption="remaining">{{.Remaining}}</span>
+          </span>
+          <a href="." class="btn-floating red halfway-fab waves-effect waves-light">
+            <i class="small material-icons">navigate_next</i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{{end}}
