@@ -22,12 +22,12 @@ func main() {
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	c, err := r.Cookie(cookieName)
 	if err != nil {
-		c = setNewCookie(w)
+		c = newSession(w)
 	}
 	session, ok := sessions[c.Value]
 	if !ok {
-		unsetBadCookie(w)
-		return
+		c = newSession(w)
+		session, _ = sessions[c.Value]
 	}
 	remaining := len(session.order) - session.current - 1
 	avatar := nextAvatar(session)
@@ -40,7 +40,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func setNewCookie(w http.ResponseWriter) *http.Cookie {
+func newSession(w http.ResponseWriter) *http.Cookie {
 	s := registerSession()
 	c := &http.Cookie{
 		Name:    cookieName,
@@ -49,14 +49,4 @@ func setNewCookie(w http.ResponseWriter) *http.Cookie {
 	}
 	http.SetCookie(w, c)
 	return c
-}
-
-func unsetBadCookie(w http.ResponseWriter) {
-	c := &http.Cookie{
-		Name:    cookieName,
-		Value:   "",
-		Expires: time.Unix(0, 0),
-	}
-	http.SetCookie(w, c)
-	w.WriteHeader(http.StatusBadRequest)
 }
