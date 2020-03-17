@@ -1,45 +1,58 @@
 package main
 
 import (
-	"crypto/rand"
-	"fmt"
-	"log"
+	"math/rand"
 	"time"
 )
 
-const sessionCookieName = "session-id"
-const sessionExpiry = time.Hour
+const expiry = 24 * time.Hour
 
-var sessions map[string]*session = make(map[string]*session)
+var sessions = make(map[uint32]*session)
 
 type session struct {
-	id      string
-	expires time.Time
-	order   []*avatar
+	id      uint32
 	current int
 }
 
-func registerSession() *session {
-	s := &session{
-		id:      makeID(),
-		expires: time.Now().Add(sessionExpiry),
-		order:   makeOrder(),
-		current: 0,
+func getSession(id uint32) *session {
+	s, ok := sessions[id]
+	if !ok {
+		s = newSession(id)
+		sessions[id] = s
 	}
-	sessions[s.id] = s
-	go func() {
-		<-time.After(sessionExpiry)
-		delete(sessions, s.id)
-	}()
 	return s
 }
 
-func makeID() string {
-	b := make([]byte, 16)
-	_, err := rand.Read(b)
-	if err != nil {
-		log.Fatal(err)
+func newSession(id uint32) *session {
+	time.AfterFunc(expiry, func() {
+		delete(sessions, id)
+	})
+	return &session{
+		id:      id,
+		current: 0,
 	}
-	return fmt.Sprintf("%x-%x-%x-%x-%x",
-		b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
+}
+
+func (s *session) moveNext() {
+	s.current = (s.current + 1) % len(avatars)
+}
+
+func (s *session) avatar() *avatar {
+	return s.calcOrder()[s.current]
+}
+
+func (s *session) remaining() int {
+	return len(avatars) - (s.current + 1)
+}
+
+func (s *session) calcOrder() []*avatar {
+	y, m, d := time.Now().Date()
+	seed := int64(s.id) + int64(y) + int64(m) + int64(d)
+	rng := rand.New(rand.NewSource(seed))
+	res := make([]*avatar, len(avatars))
+	copy(res, avatars)
+	rng.Shuffle(len(avatars), func(i, j int) {
+		res[i], res[j] = res[j], res[i]
+	})
+	return res
 }
