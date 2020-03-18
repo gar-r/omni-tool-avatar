@@ -1,28 +1,39 @@
 package main
 
 import (
-	"encoding/binary"
+	"hash/fnv"
 	"log"
 	"net"
 	"net/http"
 )
 
 func getClientID(r *http.Request) uint32 {
-	ip := getIP(r)
-	return ip2int(ip)
-}
-
-func ip2int(ip net.IP) uint32 {
-	if len(ip) == 16 {
-		return binary.BigEndian.Uint32(ip[12:16])
+	var token string
+	token = getSMSession(r)
+	if token == "" {
+		token = getIP(r)
 	}
-	return binary.BigEndian.Uint32(ip)
+	return hash(token)
 }
 
-func getIP(r *http.Request) net.IP {
+func getSMSession(r *http.Request) string {
+	c, err := r.Cookie("SMSESSION")
+	if err != nil {
+		return ""
+	}
+	return c.Value
+}
+
+func getIP(r *http.Request) string {
 	ip, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		log.Printf("unable to parse client IP: %s\n", err)
 	}
-	return net.ParseIP(ip)
+	return ip
+}
+
+func hash(s string) uint32 {
+	h := fnv.New32a()
+	h.Write([]byte(s))
+	return h.Sum32()
 }
