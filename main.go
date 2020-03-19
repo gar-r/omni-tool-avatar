@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -19,7 +18,6 @@ func main() {
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
-	executeErrorTemplate(w, errors.New("test error"))
 	id := getClientID(r)
 	session, err := getSession(id)
 	if !check(err, w) {
