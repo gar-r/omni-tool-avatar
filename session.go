@@ -13,13 +13,16 @@ type session struct {
 	Expires time.Time
 }
 
-func getSession(id uint32) *session {
-	s := store.find(id)
+func getSession(id uint32) (*session, error) {
+	s, err := store.find(id)
+	if err != nil {
+		return nil, err
+	}
 	if s == nil {
 		s = newSession(id)
 		store.save(s)
 	}
-	return s
+	return s, nil
 }
 
 func newSession(id uint32) *session {
@@ -30,9 +33,9 @@ func newSession(id uint32) *session {
 	}
 }
 
-func (s *session) moveNext() {
+func (s *session) moveNext() error {
 	s.Current = (s.Current + 1) % len(avatars)
-	store.save(s)
+	return store.save(s)
 }
 
 func (s *session) avatar() *avatar {

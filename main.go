@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 )
@@ -17,8 +19,24 @@ func main() {
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
+	executeErrorTemplate(w, errors.New("test error"))
 	id := getClientID(r)
-	session := getSession(id)
+	session, err := getSession(id)
+	if !check(err, w) {
+		return
+	}
 	executePageTemplate(w, session.avatar(), session.remaining())
-	session.moveNext()
+	err = session.moveNext()
+	if !check(err, w) {
+		return
+	}
+}
+
+func check(err error, w io.Writer) bool {
+	if err != nil {
+		log.Println(err)
+		executeErrorTemplate(w, err)
+		return false
+	}
+	return true
 }

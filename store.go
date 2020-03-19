@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/gob"
-	"log"
 	"os"
 	"sync"
 )
@@ -11,8 +10,8 @@ import (
 var store sessionStore = newFileStore("sessions.gob")
 
 type sessionStore interface {
-	find(id uint32) *session
-	save(session *session)
+	find(id uint32) (*session, error)
+	save(session *session) error
 }
 
 type fileStore struct {
@@ -26,47 +25,55 @@ func newFileStore(fileName string) *fileStore {
 	}
 }
 
-func (s *fileStore) find(id uint32) *session {
+func (s *fileStore) find(id uint32) (*session, error) {
 	s.mux.Lock()
 	defer s.mux.Unlock()
-	sessions := s.load()
+	sessions, err := s.load()
+	if err != nil {
+		return nil, err
+	}
 	session, ok := sessions[id]
 	if !ok {
-		return nil
+		return nil, nil
 	}
-	return session
+	return session, nil
 }
 
-func (s *fileStore) save(session *session) {
+func (s *fileStore) save(session *session) error {
 	s.mux.Lock()
 	defer s.mux.Unlock()
-	sessions := s.load()
+	sessions, err := s.load()
+	if err != nil {
+		return err
+	}
 	sessions[session.ID] = session
 	buf := new(bytes.Buffer)
 	e := gob.NewEncoder(buf)
-	err := e.Encode(sessions)
-	check(err)
+	err = e.Encode(sessions)
+	if err != nil {
+		return err
+	}
 	f, err := os.Create(s.fileName)
-	check(err)
+	if err != nil {
+		return err
+	}
 	_, err = f.Write(buf.Bytes())
-	check(err)
+	return err
 }
 
-func (s *fileStore) load() map[uint32]*session {
+func (s *fileStore) load() (map[uint32]*session, error) {
 	f, err := os.Open(s.fileName)
-	if os.IsNotExist(err) {
-		return make(map[uint32]*session)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return make(map[uint32]*session), nil
+		}
+		return nil, err
 	}
-	check(err)
 	d := gob.NewDecoder(f)
 	var result map[uint32]*session
 	err = d.Decode(&result)
-	check(err)
-	return result
-}
-
-func check(err error) {
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
+	return result, nil
 }
