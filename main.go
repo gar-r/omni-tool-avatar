@@ -4,37 +4,59 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"net/http"
+	"time"
 )
 
 const port = 8080
+const cookieName = "session-id"
+const sessionExpiry = 6 * time.Hour
 
 func main() {
 	fs := http.FileServer(http.Dir("assets"))
+	rand.Seed(time.Now().UnixNano())
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", rootHandler)
+	mux.HandleFunc("/reset", resetHander)
 	mux.Handle("/assets/", http.StripPrefix("/assets/", fs))
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), mux))
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
-	id := getClientID(r)
-	session, err := getSession(id)
-	if !check(err, w) {
+	s, err := extractSession(r)
+	if err != nil {
+		handleError(err, w)
 		return
 	}
-	executePageTemplate(w, session.avatar(), session.remaining())
-	err = session.moveNext()
-	if !check(err, w) {
+	setCookie(w, s.ID)
+	avatar := s.avatar().clone()
+	remaining := s.remaining()
+	err = s.moveNext()
+	if err != nil {
+		handleError(err, w)
 		return
 	}
+	executePageTemplate(w, avatar, remaining)
 }
 
-func check(err error, w io.Writer) bool {
-	if err != nil {
-		log.Println(err)
-		executeErrorTemplate(w, err)
-		return false
+func resetHander(w http.ResponseWriter, r *http.Request) {
+	c, err := r.Cookie(cookieName)
+	if err == nil {
+		clearCookie(w, c.Value)
 	}
-	return true
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+}
+
+func extractSession(r *http.Request) (*session, error) {
+	c, err := r.Cookie(cookieName)
+	if err != nil {
+		return newSession()
+	}
+	return getSession(c.Value)
+}
+
+func handleError(err error, w io.Writer) {
+	log.Println(err)
+	executeErrorTemplate(w, err)
 }

@@ -1,39 +1,47 @@
 package main
 
 import (
-	"hash/fnv"
+	"fmt"
 	"log"
-	"net"
+	"math/rand"
 	"net/http"
+	"time"
 )
 
-func getClientID(r *http.Request) uint32 {
-	var token string
-	token = getSMSession(r)
-	if token == "" {
-		token = getIP(r)
-	}
-	return hash(token)
-}
-
-func getSMSession(r *http.Request) string {
-	c, err := r.Cookie("SMSESSION")
+func newID() string {
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
 	if err != nil {
-		return ""
+		log.Fatal(err)
 	}
-	return c.Value
+	return fmt.Sprintf("%x-%x-%x-%x-%x",
+		b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
 }
 
-func getIP(r *http.Request) string {
-	ip, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		log.Printf("unable to parse client IP: %s\n", err)
-	}
-	return ip
+func newOrder() []*avatar {
+	order := make([]*avatar, len(avatars))
+	copy(order, avatars)
+	rand.Shuffle(len(order), func(i, j int) {
+		order[i], order[j] = order[j], order[i]
+	})
+	return order
 }
 
-func hash(s string) uint32 {
-	h := fnv.New32a()
-	h.Write([]byte(s))
-	return h.Sum32()
+func setCookie(w http.ResponseWriter, sessionID string) {
+	http.SetCookie(w, getCookie(sessionID))
+}
+
+func clearCookie(w http.ResponseWriter, sessionID string) {
+	c := getCookie(sessionID)
+	c.Expires = time.Unix(0, 0)
+	http.SetCookie(w, c)
+}
+
+func getCookie(sessionID string) *http.Cookie {
+	return &http.Cookie{
+		Name:     cookieName,
+		Value:    sessionID,
+		HttpOnly: true,
+		Expires:  time.Now().Add(sessionExpiry),
+	}
 }

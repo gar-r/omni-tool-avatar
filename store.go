@@ -5,12 +5,13 @@ import (
 	"encoding/gob"
 	"os"
 	"sync"
+	"time"
 )
 
-var store sessionStore = newFileStore("sessions.gob")
+var sessionStore store = newFileStore("sessions.gob")
 
-type sessionStore interface {
-	find(id uint32) (*session, error)
+type store interface {
+	find(id string) (*session, error)
 	save(session *session) error
 }
 
@@ -25,7 +26,7 @@ func newFileStore(fileName string) *fileStore {
 	}
 }
 
-func (s *fileStore) find(id uint32) (*session, error) {
+func (s *fileStore) find(id string) (*session, error) {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	sessions, err := s.load()
@@ -34,7 +35,7 @@ func (s *fileStore) find(id uint32) (*session, error) {
 	}
 	session, ok := sessions[id]
 	if !ok {
-		return nil, nil
+		return nil, &notFound{}
 	}
 	return session, nil
 }
@@ -47,9 +48,31 @@ func (s *fileStore) save(session *session) error {
 		return err
 	}
 	sessions[session.ID] = session
+	return s.persist(sessions)
+}
+
+func (s *fileStore) load() (map[string]*session, error) {
+	f, err := os.Open(s.fileName)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return make(map[string]*session), nil
+		}
+		return nil, err
+	}
+	d := gob.NewDecoder(f)
+	var result map[string]*session
+	err = d.Decode(&result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (s *fileStore) persist(sessions map[string]*session) error {
+	s.purge(sessions)
 	buf := new(bytes.Buffer)
 	e := gob.NewEncoder(buf)
-	err = e.Encode(sessions)
+	err := e.Encode(sessions)
 	if err != nil {
 		return err
 	}
@@ -61,19 +84,17 @@ func (s *fileStore) save(session *session) error {
 	return err
 }
 
-func (s *fileStore) load() (map[uint32]*session, error) {
-	f, err := os.Open(s.fileName)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return make(map[uint32]*session), nil
+func (s *fileStore) purge(sessions map[string]*session) {
+	for k, v := range sessions {
+		if v.Expires.Before(time.Now()) {
+			delete(sessions, k)
 		}
-		return nil, err
 	}
-	d := gob.NewDecoder(f)
-	var result map[uint32]*session
-	err = d.Decode(&result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+}
+
+type notFound struct {
+}
+
+func (*notFound) Error() string {
+	return "session not found"
 }
