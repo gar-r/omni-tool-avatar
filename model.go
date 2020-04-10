@@ -17,8 +17,3 @@ func makeAvatar(name, logon, msid string) *avatar {
 func (a *avatar) clone() *avatar {
 	return makeAvatar(a.Name, a.Logon, a.Msid)
 }
-
-type context struct {
-	Avatar    avatar
-	Remaining int
-}

@@ -18,26 +18,40 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", rootHandler)
+	mux.HandleFunc("/next", nextHandler)
+	mux.HandleFunc("/prev", prevHandler)
 	mux.HandleFunc("/reset", resetHander)
 	mux.Handle("/assets/", http.StripPrefix("/assets/", fs))
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), mux))
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
-	s, err := extractSession(r)
-	if err != nil {
-		handleError(err, w)
-		return
+	if s, ok := manageSession(w, r); ok {
+		avatar := s.avatar().clone()
+		executePageTemplate(w, avatar)
 	}
-	setCookie(w, s.ID)
-	avatar := s.avatar().clone()
-	remaining := s.remaining()
-	err = s.moveNext()
-	if err != nil {
-		handleError(err, w)
-		return
+}
+
+func nextHandler(w http.ResponseWriter, r *http.Request) {
+	if s, ok := manageSession(w, r); ok {
+		err := s.moveNext()
+		if err != nil {
+			handleError(err, w)
+			return
+		}
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 	}
-	executePageTemplate(w, avatar, remaining)
+}
+
+func prevHandler(w http.ResponseWriter, r *http.Request) {
+	if s, ok := manageSession(w, r); ok {
+		err := s.moveBack()
+		if err != nil {
+			handleError(err, w)
+			return
+		}
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	}
 }
 
 func resetHander(w http.ResponseWriter, r *http.Request) {
@@ -46,6 +60,16 @@ func resetHander(w http.ResponseWriter, r *http.Request) {
 		clearCookie(w, c.Value)
 	}
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+}
+
+func manageSession(w http.ResponseWriter, r *http.Request) (s *session, ok bool) {
+	s, err := extractSession(r)
+	if err != nil {
+		handleError(err, w)
+		return nil, false
+	}
+	setCookie(w, s.ID)
+	return s, true
 }
 
 func extractSession(r *http.Request) (*session, error) {

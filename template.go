@@ -14,18 +14,15 @@ var errpage = template.Must(
 	template.ParseFiles("templates/error.html"),
 )
 
-func executePageTemplate(w io.Writer, avatar *avatar, remaining int) {
-	err := page.Execute(w, &context{
-		Avatar:    *avatar,
-		Remaining: remaining,
-	})
+func executePageTemplate(w io.Writer, avatar *avatar) {
+	err := page.Execute(w, &avatar)
 	if err != nil {
 		log.Println(err)
 	}
 }
 
-func executeErrorTemplate(w io.Writer, context error) {
-	err := errpage.Execute(w, context.Error())
+func executeErrorTemplate(w io.Writer, e error) {
+	err := errpage.Execute(w, e.Error())
 	if err != nil {
 		log.Println(err)
 	}

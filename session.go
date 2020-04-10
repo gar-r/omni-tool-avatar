@@ -33,10 +33,14 @@ func (s *session) moveNext() error {
 	return sessionStore.save(s)
 }
 
-func (s *session) avatar() *avatar {
-	return s.Order[s.Current]
+func (s *session) moveBack() error {
+	s.Current = s.Current - 1
+	if s.Current < 0 {
+		s.Current = len(avatars) - 1
+	}
+	return sessionStore.save(s)
 }
 
-func (s *session) remaining() int {
-	return len(avatars) - (s.Current + 1)
+func (s *session) avatar() *avatar {
+	return s.Order[s.Current]
 }
