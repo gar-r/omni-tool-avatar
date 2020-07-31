@@ -1,7 +1,7 @@
 {{define "body"}}
 <div class="row valign-wrapper" style="height: 100vh;">
   <div class="col s12 m6 offset-m3">
-    <div class="card horizontal">
+    <div class="card horizontal z-depth-5 brown lighten-5">
       <div class="card-image">
         <img src="http://placekitten.com/100/150" />
       </div>
@@ -10,9 +10,9 @@
           <h6>{{.Name}}</h6>
         </div>
         <div class="card-action">
-          <a href="/prev">Back</a>
-          <a href="/skip">Skip</a>
-          <a href="/next">Next</a>
+          <a class="waves-effect waves-light btn-small orange right" href="/skip">Skip</a>
+          <a class="waves-effect waves-light btn-small brown" href="/prev">Back</a>
+          <a class="waves-effect waves-light btn-small brown" href="/next">Next</a>
         </div>
       </div>
     </div>
