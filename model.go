@@ -1,9 +1,12 @@
 package main
 
 var avatars = []*avatar{
-	makeAvatar("Okker Makker", "okki", "100"),
-	makeAvatar("Neko Vampire", "neko", "101"),
-	makeAvatar("Richard Garai", "garric", "103"),
+	makeAvatar("Okki", "user1", "100"),
+	makeAvatar("Neko", "user2", "101"),
+	makeAvatar("Mako", "user3", "102"),
+	makeAvatar("Kika", "user4", "103"),
+	makeAvatar("Bobi", "user5", "104"),
+	makeAvatar("Lufi", "user6", "105"),
 }
 
 type avatar struct {

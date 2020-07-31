@@ -41,6 +41,13 @@ func (s *session) moveBack() error {
 	return sessionStore.save(s)
 }
 
+func (s *session) skip() error {
+	current := s.Order[s.Current]
+	s.Order = append(s.Order[:s.Current], s.Order[s.Current+1:]...)
+	s.Order = append(s.Order, current)
+	return sessionStore.save(s)
+}
+
 func (s *session) avatar() *avatar {
 	return s.Order[s.Current]
 }
