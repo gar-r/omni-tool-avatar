@@ -6,6 +6,12 @@ import (
 	"log"
 )
 
+type context struct {
+	Current *avatar
+	Next    *avatar
+	Prev    *avatar
+}
+
 var page = template.Must(
 	template.ParseFiles("templates/page.html",
 		"templates/body.html"))
@@ -14,8 +20,8 @@ var errpage = template.Must(
 	template.ParseFiles("templates/error.html"),
 )
 
-func executePageTemplate(w io.Writer, avatar *avatar) {
-	err := page.Execute(w, &avatar)
+func executePageTemplate(w io.Writer, data *context) {
+	err := page.Execute(w, &data)
 	if err != nil {
 		log.Println(err)
 	}

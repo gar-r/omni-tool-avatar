@@ -1,21 +1,36 @@
 {{define "body"}}
 <div class="row valign-wrapper" style="height: 100vh;">
-  <div class="col s12 m6 offset-m3">
-    <div class="card horizontal z-depth-5 brown lighten-5">
+  <div class="col s3">
+    <div class="card">
       <div class="card-image">
-        <img src="http://placekitten.com/100/150" />
+        <img src="http://placekitten.com/100/120" alt="{{.Prev.Name}}">
       </div>
-      <div class="card-stacked">
-        <div class="card-content">
-          <h6>{{.Name}}</h6>
-        </div>
-        <div class="card-action">
-          <a class="waves-effect waves-light btn-small orange right" href="/skip">Skip</a>
-          <a class="waves-effect waves-light btn-small brown" href="/prev">Back</a>
-          <a class="waves-effect waves-light btn-small brown" href="/next">Next</a>
-        </div>
+      <div class="card-action">
+        <a href="/prev">prev</a>
       </div>
     </div>
   </div>
+  <div class="col s6">
+    <div class="card">
+      <div class="card-image">
+        <img src="http://placekitten.com/100/120">
+        <span class="card-title">{{.Current.Name}}</span>
+      </div>
+      <div class="card-action">
+        <a href="/skip">Skip</a>
+      </div>
+    </div>
+  </div>
+  <div class="col s3">
+    <div class="card">
+      <div class="card-image">
+        <img src="http://placekitten.com/100/120" alt="{{.Next.Name}}">
+      </div>
+      <div class="card-action">
+        <a href="/next">Next</a>
+      </div>
+    </div>
+  </div>
+</div>
 </div>
 {{end}}

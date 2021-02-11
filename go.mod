@@ -1,3 +1,3 @@
-module github.com/dargzero/omni-tool-avatar
+module okki.hu/omni-tool-avatar
 
 go 1.14

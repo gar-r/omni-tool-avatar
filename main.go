@@ -28,7 +28,7 @@ func main() {
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	if s, ok := manageSession(w, r); ok {
-		avatar := s.avatar().clone()
+		avatar := s.context()
 		executePageTemplate(w, avatar)
 	}
 }

@@ -16,7 +16,3 @@ type avatar struct {
 func makeAvatar(name, logon, msid string) *avatar {
 	return &avatar{name, logon, msid}
 }
-
-func (a *avatar) clone() *avatar {
-	return makeAvatar(a.Name, a.Logon, a.Msid)
-}

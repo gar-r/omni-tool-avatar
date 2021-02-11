@@ -29,16 +29,25 @@ func getSession(id string) (*session, error) {
 }
 
 func (s *session) moveNext() error {
-	s.Current = (s.Current + 1) % len(avatars)
+	s.Current = s.nextIndex()
 	return sessionStore.save(s)
 }
 
 func (s *session) moveBack() error {
-	s.Current = s.Current - 1
-	if s.Current < 0 {
-		s.Current = len(avatars) - 1
-	}
+	s.Current = s.prevIndex()
 	return sessionStore.save(s)
+}
+
+func (s *session) nextIndex() int {
+	return (s.Current + 1) % len(avatars)
+}
+
+func (s *session) prevIndex() int {
+	index := s.Current - 1
+	if index < 0 {
+		return len(avatars) - 1
+	}
+	return index
 }
 
 func (s *session) skip() error {
@@ -48,6 +57,10 @@ func (s *session) skip() error {
 	return sessionStore.save(s)
 }
 
-func (s *session) avatar() *avatar {
-	return s.Order[s.Current]
+func (s *session) context() *context {
+	return &context{
+		Current: s.Order[s.Current],
+		Next:    s.Order[s.nextIndex()],
+		Prev:    s.Order[s.prevIndex()],
+	}
 }
