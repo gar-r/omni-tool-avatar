@@ -4,6 +4,8 @@
 
 this simple tool aids in generating a random order from the configured avatars (user profiles)
 
+![screenshot](etc/screenshot.png)
+
 ## features
 
    * per-client order: sequence is different and separately maintained for each client
