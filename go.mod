@@ -1,3 +1,3 @@
-module okki.hu/omni-tool-avatar
+module omni-tool-avatar
 
 go 1.14
